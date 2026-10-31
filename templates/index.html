@@ -1,0 +1,419 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de inventário de ativos de TI">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Inventário de TI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</head>
+<body>
+    <header class="topbar">
+        <a href="/" class="brand">
+            <span class="brand-icon">IT</span>
+            <span>
+                <strong>Inventário TI</strong>
+                <small>Gestão de ativos</small>
+            </span>
+        </a>
+        <span class="environment">Ambiente de desenvolvimento</span>
+    </header>
+
+    <main class="container">
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">INFRAESTRUTURA DE TI</p>
+                <h1>Inventário de equipamentos</h1>
+                <p class="muted">
+                    Organize os ativos e suas localizações em todos os blocos.
+                </p>
+            </div>
+        </section>
+
+        <div id="mensagem" class="message" role="status"
+             aria-live="polite" hidden></div>
+
+        <section class="stats">
+            <article class="stat-card">
+                <span>Equipamentos</span>
+                <strong id="total-ativos">—</strong>
+                <small>Registros cadastrados</small>
+            </article>
+            <article class="stat-card">
+                <span>Blocos</span>
+                <strong id="total-blocos">—</strong>
+                <small>Localizações cadastradas</small>
+            </article>
+            <article class="stat-card">
+                <span>Salas</span>
+                <strong id="total-salas">—</strong>
+                <small>Ambientes cadastrados</small>
+            </article>
+            <article class="stat-card">
+                <span>Em manutenção</span>
+                <strong id="total-manutencao">—</strong>
+                <small>Equipamentos nessa situação</small>
+            </article>
+        </section>
+
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <h2>Localizações</h2>
+                    <p class="muted">
+                        Cadastre a estrutura física antes de associar equipamentos.
+                    </p>
+                </div>
+            </div>
+
+            <div class="location-grid">
+                <form id="form-bloco" class="form-card">
+                    <h3>1. Novo bloco</h3>
+
+                    <label for="bloco-nome">Nome do bloco *</label>
+                    <input id="bloco-nome" name="nome" required
+                           maxlength="100" placeholder="Ex.: Bloco A">
+
+                    <label for="bloco-descricao">Descrição</label>
+                    <textarea id="bloco-descricao" name="descricao"
+                              maxlength="500" rows="2"
+                              placeholder="Descrição opcional"></textarea>
+
+                    <button type="submit">Cadastrar bloco</button>
+                </form>
+
+                <form id="form-andar" class="form-card">
+                    <h3>2. Novo andar</h3>
+
+                    <label for="andar-bloco">Bloco *</label>
+                    <select id="andar-bloco" name="bloco_id" required>
+                        <option value="">Selecione um bloco</option>
+                    </select>
+
+                    <label for="andar-nome">Nome do andar *</label>
+                    <input id="andar-nome" name="nome" required
+                           maxlength="100" placeholder="Ex.: Térreo">
+
+                    <button type="submit">Cadastrar andar</button>
+                </form>
+
+                <form id="form-sala" class="form-card">
+                    <h3>3. Nova sala</h3>
+
+                    <label for="sala-bloco">Bloco *</label>
+                    <select id="sala-bloco" required>
+                        <option value="">Selecione um bloco</option>
+                    </select>
+
+                    <label for="sala-andar">Andar *</label>
+                    <select id="sala-andar" name="andar_id" required disabled>
+                        <option value="">Selecione um andar</option>
+                    </select>
+
+                    <label for="sala-nome">Nome da sala *</label>
+                    <input id="sala-nome" name="nome" required
+                           maxlength="100" placeholder="Ex.: Laboratório 01">
+
+                    <label for="sala-codigo">Código da sala</label>
+                    <input id="sala-codigo" name="codigo"
+                           maxlength="50" placeholder="Ex.: LAB-01">
+
+                    <label for="sala-descricao">Descrição</label>
+                    <textarea id="sala-descricao" name="descricao"
+                              maxlength="500" rows="2"
+                              placeholder="Descrição opcional"></textarea>
+
+                    <button type="submit">Cadastrar sala</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="panel" id="secao-equipamentos">
+            <div class="section-heading">
+                <div>
+                    <h2>Cadastrar equipamento</h2>
+                    <p class="muted">
+                        Os campos com * são obrigatórios.
+                    </p>
+                </div>
+            </div>
+
+            <form id="form-ativo">
+                <div class="form-grid">
+                    <div>
+                        <label for="ativo-nome">Nome do equipamento *</label>
+                        <input id="ativo-nome" name="nome" required
+                               maxlength="150"
+                               placeholder="Ex.: Computador da recepção">
+                    </div>
+
+                    <div>
+                        <label for="ativo-categoria">Categoria *</label>
+                        <select id="ativo-categoria" name="categoria_id" required>
+                            <option value="">Carregando categorias...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="ativo-patrimonio">Patrimônio</label>
+                        <input id="ativo-patrimonio" name="patrimonio"
+                               maxlength="100" placeholder="Ex.: PAT-00125">
+                    </div>
+
+                    <div>
+                        <label for="ativo-serie">Número de série</label>
+                        <input id="ativo-serie" name="numero_serie"
+                               maxlength="150">
+                    </div>
+
+                    <div>
+                        <label for="ativo-fabricante">Fabricante</label>
+                        <input id="ativo-fabricante" name="fabricante"
+                               maxlength="100" placeholder="Ex.: Dell">
+                    </div>
+
+                    <div>
+                        <label for="ativo-modelo">Modelo</label>
+                        <input id="ativo-modelo" name="modelo"
+                               maxlength="150" placeholder="Ex.: OptiPlex">
+                    </div>
+
+                    <div>
+                        <label for="ativo-hostname">Hostname</label>
+                        <input id="ativo-hostname" name="hostname"
+                               maxlength="150" placeholder="Nome na rede">
+                    </div>
+
+                    <div>
+                        <label for="ativo-ip">Endereço IP</label>
+                        <input id="ativo-ip" name="endereco_ip"
+                               maxlength="45" placeholder="Ex.: 192.168.1.20">
+                    </div>
+
+                    <div>
+                        <label for="ativo-sistema">Sistema operacional</label>
+                        <input id="ativo-sistema" name="sistema_operacional"
+                               maxlength="100" placeholder="Ex.: Windows 11">
+                    </div>
+
+                    <div>
+                        <label for="ativo-ram">Memória RAM (GB)</label>
+                        <input id="ativo-ram" name="memoria_ram_gb"
+                               type="number" min="1" step="1"
+                               placeholder="Ex.: 16">
+                    </div>
+
+                    <div>
+                        <label for="ativo-bloco">Bloco</label>
+                        <select id="ativo-bloco">
+                            <option value="">Sem localização</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="ativo-andar">Andar</label>
+                        <select id="ativo-andar" disabled>
+                            <option value="">Selecione um andar</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="ativo-sala">Sala</label>
+                        <select id="ativo-sala" name="sala_id" disabled>
+                            <option value="">Sem sala definida</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="ativo-status">Estado do equipamento *</label>
+                        <select id="ativo-status" name="status" required>
+                            <option value="Ativo">Ativo</option>
+                            <option value="Em manutenção">Em manutenção</option>
+                            <option value="Inativo">Inativo</option>
+                            <option value="Baixado">Baixado</option>
+                        </select>
+                    </div>
+
+                    <div class="full-width">
+                        <label for="ativo-observacoes">Observações</label>
+                        <textarea id="ativo-observacoes" name="observacoes"
+                                  maxlength="2000" rows="3"
+                                  placeholder="Informações adicionais"></textarea>
+                    </div>
+                </div>
+
+                <div class="full-width movement-fields">
+                    <h3>Dados da movimentação</h3>
+                    <p class="muted">
+                        Utilizados quando a localização do equipamento for alterada.
+                    </p>
+
+                    <label for="ativo-responsavel">Responsável pela movimentação</label>
+                    <input id="ativo-responsavel" name="responsavel"
+                        maxlength="150" placeholder="Nome do responsável">
+
+                    <label for="ativo-observacao-movimentacao">
+                        Observação da movimentação
+                    </label>
+                    <textarea id="ativo-observacao-movimentacao"
+                            name="observacao_movimentacao"
+                            maxlength="1000" rows="2"
+                            placeholder="Motivo da transferência, por exemplo"></textarea>
+                </div>
+
+                <div id="modo-edicao" class="full-width edit-notice" hidden>
+                    <span>Você está editando um equipamento existente.</span>
+                    <button type="button" id="cancelar-edicao"
+                            class="button-secondary">Cancelar edição</button>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit">Salvar equipamento</button>
+                    <button type="reset" class="button-secondary">
+                        Limpar formulário
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <h2>Equipamentos cadastrados</h2>
+                    <p class="muted">
+                        Consulte os registros e filtre os resultados.
+                    </p>
+                </div>
+                <button type="button" id="atualizar-lista"
+                        class="button-secondary">Atualizar lista</button>
+            </div>
+
+            <div class="filters">
+                <div class="search-field">
+                    <label for="busca">Pesquisar equipamento</label>
+                    <input
+                        id="busca"
+                        type="search"
+                        placeholder="Nome, patrimônio, série, hostname, IP..."
+                    >
+                </div>
+
+                <div>
+                    <label for="filtro-categoria">Categoria</label>
+                    <select id="filtro-categoria">
+                        <option value="">Todas as categorias</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="filtro-status">Estado</label>
+                    <select id="filtro-status">
+                        <option value="">Todos os estados</option>
+                        <option value="Ativo">Ativo</option>
+                        <option value="Em manutenção">Em manutenção</option>
+                        <option value="Inativo">Inativo</option>
+                        <option value="Baixado">Baixado</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="filtro-bloco">Bloco</label>
+                    <select id="filtro-bloco">
+                        <option value="">Todos os blocos</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="filtro-andar">Andar</label>
+                    <select id="filtro-andar">
+                        <option value="">Todos os andares</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="filtro-sala">Sala</label>
+                    <select id="filtro-sala">
+                        <option value="">Todas as salas</option>
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+
+                    <button type="button" id="exportar-csv">
+                        Exportar CSV
+                    </button>
+                    
+                    <button
+                        type="button"
+                        id="limpar-filtros"
+                        class="button-secondary"
+                    >
+                        Limpar filtros
+                    </button>
+                </div>
+            </div>
+
+            <p id="contador-lista" class="muted"></p>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Equipamento</th>
+                            <th>Patrimônio</th>
+                            <th>Categoria</th>
+                            <th>Localização</th>
+                            <th>Hostname / IP</th>
+                            <th>Estado</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-ativos">
+                        <tr>
+                            <td colspan="7">Carregando equipamentos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel" id="secao-historico" hidden>
+            <div class="section-heading">
+                <div>
+                    <h2 id="titulo-historico">Histórico de movimentações</h2>
+                    <p class="muted" id="subtitulo-historico"></p>
+                </div>
+
+                <button type="button" id="fechar-historico"
+                        class="button-secondary">Fechar histórico</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Localização anterior</th>
+                            <th>Nova localização</th>
+                            <th>Responsável</th>
+                            <th>Observação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-historico">
+                        <tr>
+                            <td colspan="5">Selecione um equipamento.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer>
+            Inventário TI · Protótipo de desenvolvimento
+        </footer>
+    </main>
+</body>
+</html>

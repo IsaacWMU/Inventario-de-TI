@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Login | Inventário de TI</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+<body>
+    <main class="login-container">
+        <section class="login-card">
+            <div class="login-icon">TI</div>
+
+            <p class="login-eyebrow">CONTROLE DE ACESSO</p>
+            <h1>Inventário de TI</h1>
+
+            <p class="muted">
+                Entre com suas credenciais para acessar o sistema.
+            </p>
+
+            {% if erro %}
+                <div class="message error" role="alert">
+                    {{ erro }}
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <label for="usuario">Usuário</label>
+                <input
+                    id="usuario"
+                    name="usuario"
+                    type="text"
+                    autocomplete="username"
+                    required
+                    autofocus
+                >
+
+                <label for="senha">Senha</label>
+                <input
+                    id="senha"
+                    name="senha"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+                <button type="submit">Entrar no sistema</button>
+            </form>
+
+            <p class="login-footer">
+                Acesso restrito à equipe autorizada.
+            </p>
+        </section>
+    </main>
+</body>
+</html>
