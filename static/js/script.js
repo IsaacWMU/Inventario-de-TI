@@ -230,6 +230,16 @@ async function carregarLocalizacoes() {
     [blocos, andares, salas] = resultados;
 
     preencherSelect(
+        "#planta-bloco",
+        blocos,
+        "Selecione um bloco",
+        "id",
+        (bloco) => bloco.nome
+    );
+
+    atualizarAndares("#planta-bloco", "#planta-andar");
+
+    preencherSelect(
         "#andar-bloco",
         blocos,
         "Selecione um bloco",
@@ -271,14 +281,236 @@ async function carregarCategorias() {
     atualizarSeletoresDeAtivos();
 }
 
+function atualizarIndicadores() {
+    $("#total-ativos").textContent = ativos.length;
+
+    const quantidadePorStatus = {
+        "Ativo": 0,
+        "Em manutenção": 0,
+        "Inativo": 0,
+        "Baixado": 0
+    };
+
+    ativos.forEach((ativo) => {
+        if (
+            Object.prototype.hasOwnProperty.call(
+                quantidadePorStatus,
+                ativo.status
+            )
+        ) {
+            quantidadePorStatus[ativo.status]++;
+        }
+    });
+
+    $("#total-status-ativo").textContent =
+        quantidadePorStatus["Ativo"];
+
+    $("#total-manutencao").textContent =
+        quantidadePorStatus["Em manutenção"];
+
+    $("#total-status-inativo").textContent =
+        quantidadePorStatus["Inativo"];
+
+    $("#total-status-baixado").textContent =
+        quantidadePorStatus["Baixado"];
+    
+    renderizarGraficoStatus();
+    renderizarGraficoCategoria();
+    renderizarGraficoBloco();
+}
+
+function renderizarGraficoStatus() {
+    const elemento = $("#grafico-status");
+
+    const status = [
+        { nome: "Ativo", classe: "ativo" },
+        { nome: "Em manutenção", classe: "manutencao" },
+        { nome: "Inativo", classe: "inativo" },
+        { nome: "Baixado", classe: "baixado" }
+    ];
+
+    const total = ativos.length;
+
+    const quantidadePorStatus = status.map((item) => {
+        const quantidade = ativos.filter(
+            (ativo) => ativo.status === item.nome
+        ).length;
+
+        const percentual = total > 0
+            ? (quantidade / total) * 100
+            : 0;
+
+        return {
+            ...item,
+            quantidade,
+            percentual
+        };
+    });
+
+    elemento.innerHTML = quantidadePorStatus.map((item) => `
+        <div class="status-item">
+            <div class="status-info">
+                <span>${item.nome}</span>
+                <strong>${item.quantidade}</strong>
+            </div>
+
+            <div
+                class="status-bar-background"
+                role="progressbar"
+                aria-label="${item.nome}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="${item.percentual.toFixed(1)}"
+            >
+                <div
+                    class="status-bar ${item.classe}"
+                    style="width: ${item.percentual}%"
+                ></div>
+            </div>
+
+            <small>${item.percentual.toFixed(1)}%</small>
+        </div>
+    `).join("");
+}
+
+function renderizarGraficoCategoria() {
+    const elemento = $("#grafico-categoria");
+    const quantidadePorCategoria = {};
+
+    ativos.forEach((ativo) => {
+        const categoria = String(
+            ativo.categoria || "Sem categoria"
+        );
+
+        quantidadePorCategoria[categoria] =
+            (quantidadePorCategoria[categoria] || 0) + 1;
+    });
+
+    const categoriasOrdenadas = Object.entries(
+        quantidadePorCategoria
+    ).sort((a, b) => b[1] - a[1]);
+
+    elemento.replaceChildren();
+
+    if (categoriasOrdenadas.length === 0) {
+        const mensagem = document.createElement("p");
+        mensagem.textContent = "Nenhum equipamento cadastrado.";
+        elemento.appendChild(mensagem);
+        return;
+    }
+
+    categoriasOrdenadas.forEach(([categoria, quantidade]) => {
+        const percentual = ativos.length > 0
+            ? (quantidade / ativos.length) * 100
+            : 0;
+
+        const item = document.createElement("div");
+        item.className = "category-item";
+
+        const cabecalho = document.createElement("div");
+        cabecalho.className = "category-info";
+
+        const nome = document.createElement("span");
+        nome.textContent = categoria;
+
+        const total = document.createElement("strong");
+        total.textContent = quantidade;
+
+        cabecalho.append(nome, total);
+
+        const fundo = document.createElement("div");
+        fundo.className = "category-bar-background";
+        fundo.setAttribute("role", "progressbar");
+        fundo.setAttribute("aria-label", categoria);
+        fundo.setAttribute("aria-valuemin", "0");
+        fundo.setAttribute("aria-valuemax", "100");
+        fundo.setAttribute("aria-valuenow", percentual.toFixed(1));
+
+        const barra = document.createElement("div");
+        barra.className = "category-bar";
+        barra.style.width = `${percentual}%`;
+
+        fundo.appendChild(barra);
+
+        const legenda = document.createElement("small");
+        legenda.textContent = `${percentual.toFixed(1)}%`;
+
+        item.append(cabecalho, fundo, legenda);
+        elemento.appendChild(item);
+    });
+}
+
+function renderizarGraficoBloco() {
+    const elemento = $("#grafico-bloco");
+    const quantidadePorBloco = {};
+
+    ativos.forEach((ativo) => {
+        const bloco = String(
+            ativo.bloco || "Sem bloco"
+        );
+
+        quantidadePorBloco[bloco] =
+            (quantidadePorBloco[bloco] || 0) + 1;
+    });
+
+    const blocosOrdenados = Object.entries(
+        quantidadePorBloco
+    ).sort((a, b) => b[1] - a[1]);
+
+    elemento.replaceChildren();
+
+    if (blocosOrdenados.length === 0) {
+        const mensagem = document.createElement("p");
+        mensagem.textContent = "Nenhum equipamento cadastrado.";
+        elemento.appendChild(mensagem);
+        return;
+    }
+
+    blocosOrdenados.forEach(([bloco, quantidade]) => {
+        const percentual = ativos.length > 0
+            ? (quantidade / ativos.length) * 100
+            : 0;
+
+        const item = document.createElement("div");
+        item.className = "block-item";
+
+        const cabecalho = document.createElement("div");
+        cabecalho.className = "block-info";
+
+        const nome = document.createElement("span");
+        nome.textContent = bloco;
+
+        const total = document.createElement("strong");
+        total.textContent = quantidade;
+
+        cabecalho.append(nome, total);
+
+        const fundo = document.createElement("div");
+        fundo.className = "block-bar-background";
+        fundo.setAttribute("role", "progressbar");
+        fundo.setAttribute("aria-label", bloco);
+        fundo.setAttribute("aria-valuemin", "0");
+        fundo.setAttribute("aria-valuemax", "100");
+        fundo.setAttribute("aria-valuenow", percentual.toFixed(1));
+
+        const barra = document.createElement("div");
+        barra.className = "block-bar";
+        barra.style.width = `${percentual}%`;
+
+        fundo.appendChild(barra);
+
+        const legenda = document.createElement("small");
+        legenda.textContent = `${percentual.toFixed(1)}%`;
+
+        item.append(cabecalho, fundo, legenda);
+        elemento.appendChild(item);
+    });
+}
+
 async function carregarAtivos() {
     ativos = await requisicao("/api/ativos");
 
-    $("#total-ativos").textContent = ativos.length;
-    $("#total-manutencao").textContent = ativos.filter(
-        (ativo) => ativo.status === "Em manutenção"
-    ).length;
-
+    atualizarIndicadores();
     renderizarTabela();
 }
 
@@ -431,6 +663,21 @@ function exportarCSV() {
     );
 }
 
+function exportarExcel() {
+    const parametros = new URLSearchParams();
+
+    parametros.set("busca", $("#busca").value.trim());
+    parametros.set("categoria", $("#filtro-categoria").value);
+    parametros.set("status", $("#filtro-status").value);
+    parametros.set("bloco", $("#filtro-bloco").value);
+    parametros.set("andar", $("#filtro-andar").value);
+    parametros.set("sala", $("#filtro-sala").value);
+
+    const url = `/api/ativos/exportar-xlsx?${parametros.toString()}`;
+
+    window.location.href = url;
+}
+
 function renderizarTabela() {
     const filtrados = obterAtivosFiltrados();
 
@@ -555,6 +802,8 @@ async function enviarFormulario(formulario, url, prepararDados, sucesso) {
 }
 
 $("#exportar-csv").addEventListener("click", exportarCSV);
+
+$("#exportar-xlsx").addEventListener("click", exportarExcel);
 
 $("#form-bloco").addEventListener("submit", async (evento) => {
     evento.preventDefault();
@@ -878,6 +1127,161 @@ async function carregarHistorico(id) {
 
 $("#fechar-historico").addEventListener("click", () => {
     $("#secao-historico").hidden = true;
+});
+
+function atualizarVisualizacaoPlanta() {
+    const blocoId = $("#planta-bloco").value;
+    const andarId = $("#planta-andar").value;
+    const area = $("#planta-area");
+
+    area.replaceChildren();
+
+    const bloco = blocos.find(
+        (item) => String(item.id) === blocoId
+    );
+
+    const andar = andares.find(
+        (item) =>
+            String(item.id) === andarId &&
+            String(item.bloco_id) === blocoId
+    );
+
+    if (!blocoId || !bloco || !andarId || !andar) {
+        const mensagem = document.createElement("div");
+        mensagem.className = "planta-vazia";
+
+        const titulo = document.createElement("h3");
+        titulo.textContent = "Selecione um andar";
+
+        const descricao = document.createElement("p");
+        descricao.textContent =
+            "Escolha um bloco e um andar para visualizar suas salas.";
+
+        mensagem.append(titulo, descricao);
+        area.appendChild(mensagem);
+        return;
+    }
+
+    const titulo = document.createElement("div");
+    titulo.className = "planta-cabecalho";
+
+    const nome = document.createElement("h3");
+    nome.textContent = `${bloco.nome} — ${andar.nome}`;
+
+    const salasDoAndar = salas.filter(
+        (sala) => String(sala.andar_id) === andarId
+    );
+
+    const contador = document.createElement("p");
+    contador.textContent =
+        `${salasDoAndar.length} sala(s) cadastrada(s)`;
+
+    titulo.append(nome, contador);
+    area.appendChild(titulo);
+
+    if (salasDoAndar.length === 0) {
+        const mensagem = document.createElement("div");
+        mensagem.className = "planta-vazia";
+
+        const subtitulo = document.createElement("h3");
+        subtitulo.textContent = "Nenhuma sala cadastrada";
+
+        const descricao = document.createElement("p");
+        descricao.textContent =
+            "Cadastre salas na seção Localizações para exibi-las aqui.";
+
+        mensagem.append(subtitulo, descricao);
+        area.appendChild(mensagem);
+        return;
+    }
+
+    const mapa = document.createElement("div");
+    mapa.className = "planta-mapa";
+
+    let salaArrastada = null;
+
+    mapa.addEventListener("dragstart", (evento) => {
+        const cartao = evento.target.closest(".planta-sala");
+
+        if (!cartao) {
+            return;
+        }
+
+        salaArrastada = cartao;
+
+        evento.dataTransfer.effectAllowed = "move";
+        evento.dataTransfer.setData(
+            "text/plain",
+            cartao.dataset.salaId
+        );
+
+        cartao.classList.add("sala-arrastando");
+    });
+
+    mapa.addEventListener("dragover", (evento) => {
+        evento.preventDefault();
+        evento.dataTransfer.dropEffect = "move";
+    });
+
+    mapa.addEventListener("drop", (evento) => {
+        evento.preventDefault();
+
+        const destino = evento.target.closest(".planta-sala");
+
+        if (
+            !salaArrastada ||
+            !destino ||
+            destino === salaArrastada
+        ) {
+            return;
+        }
+
+        const retangulo = destino.getBoundingClientRect();
+        const depois =
+            evento.clientY > retangulo.top + retangulo.height / 2;
+
+        mapa.insertBefore(
+            salaArrastada,
+            depois ? destino.nextSibling : destino
+        );
+    });
+
+    mapa.addEventListener("dragend", () => {
+        if (salaArrastada) {
+            salaArrastada.classList.remove("sala-arrastando");
+        }
+
+        salaArrastada = null;
+    });
+
+    salasDoAndar.forEach((sala) => {
+        const cartao = document.createElement("div");
+        cartao.className = "planta-sala";
+        cartao.dataset.salaId = sala.id;
+
+        cartao.draggable = true;
+        cartao.title = "Arraste para reorganizar esta sala.";
+
+        const nomeSala = document.createElement("strong");
+        nomeSala.textContent = sala.nome;
+
+        const identificacao = document.createElement("span");
+        identificacao.textContent = sala.codigo || "Sem código";
+
+        cartao.append(nomeSala, identificacao);
+        mapa.appendChild(cartao);
+    });
+
+    area.appendChild(mapa);
+}
+
+$("#planta-bloco").addEventListener("change", () => {
+    atualizarAndares("#planta-bloco", "#planta-andar");
+    atualizarVisualizacaoPlanta();
+});
+
+$("#planta-andar").addEventListener("change", () => {
+    atualizarVisualizacaoPlanta();
 });
 
 async function iniciarSistema() {

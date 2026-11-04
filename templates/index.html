@@ -35,28 +35,128 @@
 
         <div id="mensagem" class="message" role="status"
              aria-live="polite" hidden></div>
-
+ 
         <section class="stats">
             <article class="stat-card">
-                <span>Equipamentos</span>
+                <span>Total de equipamentos</span>
                 <strong id="total-ativos">—</strong>
                 <small>Registros cadastrados</small>
             </article>
+
+            <article class="stat-card">
+                <span>Equipamentos ativos</span>
+                <strong id="total-status-ativo">—</strong>
+                <small>Em operação</small>
+            </article>
+
+            <article class="stat-card">
+                <span>Em manutenção</span>
+                <strong id="total-manutencao">—</strong>
+                <small>Precisam de acompanhamento</small>
+            </article>
+
+            <article class="stat-card">
+                <span>Equipamentos inativos</span>
+                <strong id="total-status-inativo">—</strong>
+                <small>Fora de operação</small>
+            </article>
+
+            <article class="stat-card">
+                <span>Equipamentos baixados</span>
+                <strong id="total-status-baixado">—</strong>
+                <small>Baixados do inventário</small>
+            </article>
+
             <article class="stat-card">
                 <span>Blocos</span>
                 <strong id="total-blocos">—</strong>
-                <small>Localizações cadastradas</small>
+                <small>Blocos cadastrados</small>
             </article>
+
             <article class="stat-card">
                 <span>Salas</span>
                 <strong id="total-salas">—</strong>
                 <small>Ambientes cadastrados</small>
             </article>
-            <article class="stat-card">
-                <span>Em manutenção</span>
-                <strong id="total-manutencao">—</strong>
-                <small>Equipamentos nessa situação</small>
+        </section>
+
+        <section class="dashboard-charts">
+            <article class="chart-card">
+                <div class="chart-header">
+                    <div>
+                        <h2>Equipamentos por status</h2>
+                        <p>Distribuição geral do inventário</p>
+                    </div>
+                </div>
+
+                <div id="grafico-status" class="status-chart">
+                    <p>Carregando gráfico...</p>
+                </div>
             </article>
+
+            <article class="chart-card">
+                <div class="chart-header">
+                    <div>
+                        <h2>Equipamentos por categoria</h2>
+                        <p>Quantidade cadastrada em cada tipo de equipamento</p>
+                    </div>
+                </div>
+
+                <div id="grafico-categoria" class="category-chart">
+                    <p>Carregando gráfico...</p>
+                </div>
+            </article>
+
+            <article class="chart-card">
+                <div class="chart-header">
+                    <div>
+                        <h2>Equipamentos por bloco</h2>
+                        <p>Distribuição dos equipamentos por localização</p>
+                    </div>
+                </div>
+
+                <div id="grafico-bloco" class="block-chart">
+                    <p>Carregando gráfico...</p>
+                </div>
+            </article>       
+        </section>
+
+        <section class="panel" id="secao-planta">
+            <div class="section-heading">
+                <div>
+                    <h2>Planta visual do campus</h2>
+                    <p class="muted">
+                        Selecione o bloco e o andar para visualizar a planta física.
+                    </p>
+                </div>
+            </div>
+
+            <div class="planta-controles">
+                <div>
+                    <label for="planta-bloco">Bloco</label>
+                    <select id="planta-bloco">
+                        <option value="">Selecione um bloco</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="planta-andar">Andar</label>
+                    <select id="planta-andar" disabled>
+                        <option value="">Selecione um andar</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="planta-area" class="planta-area">
+                <div class="planta-vazia">
+                    <span class="planta-icone" aria-hidden="true">⌖</span>
+                    <h3>Planta não selecionada</h3>
+                    <p>
+                        Selecione um bloco e um andar para preparar a visualização
+                        do ambiente.
+                    </p>
+                </div>
+            </div>
         </section>
 
         <section class="panel">
@@ -344,6 +444,10 @@
 
                     <button type="button" id="exportar-csv">
                         Exportar CSV
+                    </button>
+
+                    <button type="button" id="exportar-xlsx">
+                        Exportar Excel (.xlsx)
                     </button>
                     
                     <button

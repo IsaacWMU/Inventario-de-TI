@@ -12,7 +12,7 @@ from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 from datetime import timedelta, datetime
 from functools import wraps
-from flask import Flask, jsonify, request, render_template, redirect, url_for, session
+from flask import Flask, jsonify, request, render_template, redirect, url_for, session, send_file
 from database import inicializar_banco, conectar_banco
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -45,7 +45,30 @@ app.config["SESSION_COOKIE_SECURE"] = (
 )
 
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
+
+def garantir_colunas_posicao_salas():
+    with conectar_banco() as conexao:
+        colunas = {
+            coluna[1]
+            for coluna in conexao.execute(
+                "PRAGMA table_info(salas)"
+            ).fetchall()
+        }
+
+        if "posicao_x" not in colunas:
+            conexao.execute("""
+                ALTER TABLE salas
+                ADD COLUMN posicao_x REAL
+            """)
+
+        if "posicao_y" not in colunas:
+            conexao.execute("""
+                ALTER TABLE salas
+                ADD COLUMN posicao_y REAL
+            """)
+
 inicializar_banco()
+garantir_colunas_posicao_salas()
 
 @app.route("/login", methods=["GET", "POST"])
 @limiter.limit("5 per minute", methods=["POST"])
@@ -661,6 +684,8 @@ def listar_salas():
                 s.codigo,
                 s.descricao,
                 s.andar_id,
+                s.posicao_X,
+                s.posicao_Y,
                 a.nome AS andar,
                 b.id AS bloco_id,
                 b.nome AS bloco
@@ -716,6 +741,59 @@ def cadastrar_sala():
     except sqlite3.IntegrityError:
         return erro("Já existe uma sala com esse nome nesse andar.", 409)
 
+@app.route("/api/salas/<int:sala_id>/posicao", methods=["PUT"])
+def atualizar_posicao_sala(sala_id):
+    dados = obter_dados()
+
+    if dados is None:
+        return erro("Envie os dados no formato JSON.")
+
+    posicao_x = dados.get("posicao_x")
+    posicao_y = dados.get("posicao_y")
+
+    # Booleanos também são considerados números pelo Python,
+    # por isso precisam ser rejeitados explicitamente.
+    if (
+        isinstance(posicao_x, bool)
+        or not isinstance(posicao_x, (int, float))
+        or isinstance(posicao_y, bool)
+        or not isinstance(posicao_y, (int, float))
+    ):
+        return erro("As posições X e Y devem ser números.")
+
+    import math
+
+    if not math.isfinite(posicao_x) or not math.isfinite(posicao_y):
+        return erro("As posições devem ser números finitos.")
+
+    # As coordenadas serão percentuais dentro da planta: 0 a 100.
+    if not (0 <= posicao_x <= 100 and 0 <= posicao_y <= 100):
+        return erro("As posições devem estar entre 0 e 100.")
+
+    with conectar_banco() as conexao:
+        sala = conexao.execute(
+            "SELECT id FROM salas WHERE id = ?",
+            (sala_id,)
+        ).fetchone()
+
+        if sala is None:
+            return erro("Sala não encontrada.", 404)
+
+        conexao.execute(
+            """
+            UPDATE salas
+            SET posicao_x = ?, posicao_y = ?
+            WHERE id = ?
+            """,
+            (posicao_x, posicao_y, sala_id)
+        )
+
+    return jsonify({
+        "mensagem": "Posição da sala atualizada com sucesso.",
+        "sala_id": sala_id,
+        "posicao_x": posicao_x,
+        "posicao_y": posicao_y
+    })
 
 # -------------------------
 # ATIVOS DE TI
@@ -756,6 +834,119 @@ def listar_ativos():
 
     return jsonify([dict(item) for item in registros])
 
+@app.route("/api/ativos/exportar-xlsx", methods=["GET"])
+def exportar_ativos_xlsx():
+    # A autenticação é verificada pelo exigir_autenticacao().
+    # Lê os mesmos tipos de filtros usados na interface.
+    termo = request.args.get("busca", "").strip()
+    categoria_id = request.args.get("categoria", "").strip()
+    status = request.args.get("status", "").strip()
+    bloco_id = request.args.get("bloco", "").strip()
+    andar_id = request.args.get("andar", "").strip()
+    sala_id = request.args.get("sala", "").strip()
+
+    consulta = """
+        SELECT
+            a.id,
+            a.patrimonio,
+            a.numero_serie,
+            a.nome,
+            a.fabricante,
+            a.modelo,
+            a.endereco_ip,
+            a.hostname,
+            a.sistema_operacional,
+            a.memoria_ram_gb,
+            a.categoria_id,
+            c.nome AS categoria,
+            a.sala_id,
+            s.nome AS sala,
+            an.nome AS andar,
+            b.nome AS bloco,
+            a.status,
+            a.observacoes,
+            a.criado_em,
+            a.atualizado_em
+        FROM ativos a
+        JOIN categorias c ON c.id = a.categoria_id
+        LEFT JOIN salas s ON s.id = a.sala_id
+        LEFT JOIN andares an ON an.id = s.andar_id
+        LEFT JOIN blocos b ON b.id = an.bloco_id
+        WHERE 1 = 1
+    """
+
+    parametros = []
+
+    if termo:
+        campos_busca = [
+            "a.nome",
+            "a.patrimonio",
+            "a.numero_serie",
+            "a.fabricante",
+            "a.modelo",
+            "a.hostname",
+            "a.endereco_ip",
+            "a.sistema_operacional",
+            "a.memoria_ram_gb",
+            "c.nome",
+            "s.nome",
+            "an.nome",
+            "b.nome",
+            "a.status",
+            "a.observacoes",
+        ]
+
+        condicoes = [
+            "LOWER(COALESCE(CAST("
+            + campo
+            + " AS TEXT), '')) LIKE LOWER(?)"
+            for campo in campos_busca
+        ]
+
+        consulta += " AND (" + " OR ".join(condicoes) + ")"
+        parametros.extend([f"%{termo}%"] * len(condicoes))
+
+    if categoria_id:
+        consulta += " AND a.categoria_id = ?"
+        parametros.append(categoria_id)
+
+    if status:
+        consulta += " AND a.status = ?"
+        parametros.append(status)
+
+    if bloco_id:
+        consulta += " AND b.id = ?"
+        parametros.append(bloco_id)
+
+    if andar_id:
+        consulta += " AND an.id = ?"
+        parametros.append(andar_id)
+
+    if sala_id:
+        consulta += " AND a.sala_id = ?"
+        parametros.append(sala_id)
+
+    consulta += " ORDER BY a.id DESC"
+
+    with conectar_banco() as conexao:
+        registros = conexao.execute(
+            consulta,
+            parametros
+        ).fetchall()
+
+    equipamentos = [dict(registro) for registro in registros]
+
+    arquivo = criar_planilha_excel(equipamentos)
+
+    return send_file(
+        arquivo,
+        as_attachment=True,
+        download_name="inventario_ti.xlsx",
+        mimetype=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+    )
 
 @app.route("/api/ativos", methods=["POST"])
 def cadastrar_ativo():

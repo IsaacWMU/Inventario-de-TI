@@ -551,3 +551,403 @@ footer {
     font-size: 0.82rem;
     text-align: center;
 }
+
+/* Dashboard: gráficos */
+
+.dashboard-charts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    margin: 24px 0;
+}
+
+.chart-card {
+    min-width: 0;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #dbe4ef;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(15, 40, 75, 0.05);
+}
+
+.chart-header {
+    margin-bottom: 24px;
+}
+
+.chart-header h2 {
+    margin: 0 0 6px;
+    color: #17365d;
+    font-size: 20px;
+}
+
+.chart-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.status-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.status-item {
+    display: grid;
+    grid-template-columns: minmax(120px, 160px) minmax(60px, 1fr) 55px;
+    align-items: center;
+    gap: 14px;
+}
+
+.status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #334155;
+    font-size: 14px;
+}
+
+.status-info strong {
+    color: #17365d;
+    font-size: 17px;
+}
+
+.status-bar-background {
+    height: 12px;
+    overflow: hidden;
+    background: #e8eef5;
+    border-radius: 20px;
+}
+
+.status-bar {
+    height: 100%;
+    min-width: 0;
+    border-radius: 20px;
+    transition: width 0.3s ease;
+}
+
+.status-bar.ativo {
+    background: #21865b;
+}
+
+.status-bar.manutencao {
+    background: #e6a23c;
+}
+
+.status-bar.inativo {
+    background: #64748b;
+}
+
+.status-bar.baixado {
+    background: #b91c1c;
+}
+
+.status-item small {
+    color: #64748b;
+    text-align: right;
+    font-size: 13px;
+}
+
+@media (max-width: 600px) {
+    .chart-card {
+        padding: 16px;
+    }
+
+    .status-item {
+        grid-template-columns: minmax(95px, 120px) minmax(40px, 1fr) 45px;
+        gap: 8px;
+    }
+
+    .status-info {
+        font-size: 12px;
+    }
+}
+
+/* Gráfico de equipamentos por categoria */
+
+.category-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.category-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 55px;
+    gap: 8px 14px;
+    align-items: center;
+}
+
+.category-info {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    color: #334155;
+    font-size: 14px;
+}
+
+.category-info span {
+    overflow-wrap: anywhere;
+}
+
+.category-info strong {
+    color: #17365d;
+    font-size: 16px;
+}
+
+.category-bar-background {
+    height: 12px;
+    overflow: hidden;
+    background: #e8eef5;
+    border-radius: 20px;
+}
+
+.category-bar {
+    height: 100%;
+    background: #2878c8;
+    border-radius: 20px;
+    transition: width 0.3s ease;
+}
+
+.category-item small {
+    color: #64748b;
+    text-align: right;
+    font-size: 13px;
+}
+
+/* Dois gráficos lado a lado quando houver espaço */
+
+.dashboard-charts {
+    grid-template-columns:
+        repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+}
+
+/* Gráfico de equipamentos por bloco */
+
+.block-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.block-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 55px;
+    gap: 8px 14px;
+    align-items: center;
+}
+
+.block-info {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    color: #334155;
+    font-size: 14px;
+}
+
+.block-info span {
+    overflow-wrap: anywhere;
+}
+
+.block-info strong {
+    color: #17365d;
+    font-size: 16px;
+}
+
+.block-bar-background {
+    height: 12px;
+    overflow: hidden;
+    background: #e8eef5;
+    border-radius: 20px;
+}
+
+.block-bar {
+    height: 100%;
+    background: #2878c8;
+    border-radius: 20px;
+    transition: width 0.3s ease;
+}
+
+.block-item small {
+    color: #64748b;
+    text-align: right;
+    font-size: 13px;
+}
+
+/* Planta visual do campus — estrutura inicial */
+
+.planta-controles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.planta-controles label {
+    margin-top: 0;
+}
+
+.planta-area {
+    min-height: 280px;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    overflow: auto;
+    background-color: #f8fafc;
+    background-image:
+        linear-gradient(#e7edf5 1px, transparent 1px),
+        linear-gradient(90deg, #e7edf5 1px, transparent 1px);
+    background-size: 24px 24px;
+    border: 1px solid #dbe4ef;
+    border-radius: 12px;
+}
+
+.planta-vazia {
+    width: min(100%, 440px);
+    padding: 24px;
+    text-align: center;
+    background: #ffffff;
+    border: 1px solid #dbe4ef;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgb(23 54 93 / 5%);
+}
+
+.planta-vazia h3 {
+    margin: 0 0 10px;
+    color: #17365d;
+}
+
+.planta-vazia p {
+    margin: 0;
+    color: #69768a;
+    line-height: 1.6;
+}
+
+.planta-icone {
+    display: inline-grid;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 14px;
+    place-items: center;
+    color: #2457c5;
+    background: #e8efff;
+    border-radius: 12px;
+    font-size: 1.7rem;
+}
+
+@media (max-width: 620px) {
+    .planta-controles {
+        grid-template-columns: 1fr;
+    }
+
+    .planta-area {
+        min-height: 240px;
+        padding: 16px;
+    }
+}
+
+/* Etapa 6.2.1 — Salas na planta */
+
+.planta-area {
+    display: block;
+    min-height: 320px;
+}
+
+.planta-cabecalho {
+    margin-bottom: 20px;
+}
+
+.planta-cabecalho h3 {
+    margin: 0 0 6px;
+    color: #17365d;
+}
+
+.planta-cabecalho p {
+    margin: 0;
+    color: #69768a;
+    font-size: 0.9rem;
+}
+
+.planta-mapa {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(140px, 1fr)
+    );
+    gap: 14px;
+    align-content: start;
+    min-height: 220px;
+    padding: 18px;
+    background: rgb(255 255 255 / 65%);
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+}
+
+.planta-sala {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    min-height: 100px;
+    padding: 14px;
+    background: #ffffff;
+    border: 2px solid #8aaddb;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgb(23 54 93 / 8%);
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.planta-sala strong {
+    color: #17365d;
+    font-size: 0.95rem;
+}
+
+.planta-sala span {
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 620px) {
+    .planta-mapa {
+        grid-template-columns: repeat(
+            auto-fill,
+            minmax(110px, 1fr)
+        );
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .planta-sala {
+        min-height: 90px;
+        padding: 10px;
+    }
+}
+/* Etapa 6.2.2 — Arrastar salas */
+
+.planta-sala {
+    cursor: grab;
+    user-select: none;
+    transition:
+        opacity 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.planta-sala:hover {
+    border-color: #2457c5;
+    box-shadow: 0 4px 12px rgb(36 87 197 / 12%);
+}
+
+.planta-sala:active {
+    cursor: grabbing;
+}
+
+.planta-sala.sala-arrastando {
+    opacity: 0.4;
+    border-style: dashed;
+}
